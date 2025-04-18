@@ -10,6 +10,6 @@ import lombok.*;
 public class Dish {
     private Long id;
     private String name;
-    private Long quantity;
-    private double amount;
+    private Long quantitySold;
+    private double totalAmount;
 }

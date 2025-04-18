@@ -10,9 +10,9 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class PointOfSale {
+public class Sale {
     private Long id;
     private String name;
-    private LocalDateTime synchronisationDate;
+    private LocalDateTime updatedAt;
     private List<Dish> dishes;
 }

@@ -14,6 +14,9 @@ public class CentralService {
     @Autowired private CentralRepository centralRepository;
 
     public List<BestSale> getAllBestSales(Integer limit, LocalDateTime startDate, LocalDateTime endDate){
-        return centralRepository.getAllBestSales(limit, startDate, endDate);
-    }
+ if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date must be before end date");
+        }
+        
+        return centralRepository.getAllBestSales(limit, startDate, endDate);    }
 }

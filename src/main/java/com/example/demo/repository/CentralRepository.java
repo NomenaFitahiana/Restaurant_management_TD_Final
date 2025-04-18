@@ -4,12 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Repository;
 
 import com.example.demo.entity.BestSale;
@@ -25,25 +25,35 @@ public class CentralRepository {
 
     public List<BestSale> getAllBestSales(Integer limit, LocalDateTime startDate, LocalDateTime endDate){
         List<BestSale> bestSales = new ArrayList<>();
-       try (  Connection connection = dataSource.getConnection();
+       try (  Connection connection = dataSource.getConnection()){
+        StringBuilder query = new StringBuilder("SELECT bs.id, bs.updatedat, bs.id_sale FROM best_sale bs WHERE 1=1");
+        List<Object> parameters = new ArrayList<>();
+        int paramIndex = 1;
 
-       StringBuilder query = new StringBuilder("select bs.id, bs.updatedat, bs.id_sale from best_sale bs where 1 = 1 ");
+        if (startDate != null && endDate != null) {
+            query.append(" AND updatedat BETWEEN ? AND ?");
+            parameters.add(Timestamp.valueOf(startDate));
+            parameters.add(Timestamp.valueOf(endDate));
+        }
 
-       if (startDate !== null && endDate !== null) {
-        query.append("and updatedat between ? and ?");
-       }
+        query.append(" ORDER BY bs.updatedat DESC");
 
-       if (limit !== null) {
-        query.append("limit ?");
-       }
+        if (limit != null) {
+            query.append(" LIMIT ?");
+            parameters.add(limit);
+        }
 
-       PreparedStatement statement = connection.prepareStatement(query)){
+        PreparedStatement statement = connection.prepareStatement(query.toString());
 
+       for (int i = 0; i < parameters.size(); i++) {
+                Object param = parameters.get(i);
+                if (param instanceof Timestamp) {
+                    statement.setTimestamp(i + 1, (Timestamp) param);
+                } else if (param instanceof Integer) {
+                    statement.setInt(i + 1, (Integer) param);
+                }
+            }
 
-        statement.setTimestamp(1, startDate);
-        statement.setTimestamp(2,endDate);
-        statement.setInt(3, limit);
-        
         ResultSet resultSet = statement.executeQuery();
 
         while (resultSet.next()) {
@@ -61,7 +71,10 @@ public class CentralRepository {
       return bestSales;
 
        } catch (SQLException e) {
-        throw new RuntimeException(e);
-       }
+        throw new RuntimeException("Error fetching best sales", e);       }
+    }
+
+    public BestSale saveAll(List<Sale> sales){
+        BestSale bestSale = new BestSale();
     }
 }

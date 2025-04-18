@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import com.example.demo.repository.CentralRepository;
 public class CentralService {
     @Autowired private CentralRepository centralRepository;
 
-    public List<BestSale> getAllBestSales(){
-        return centralRepository.getAllBestSales();
+    public List<BestSale> getAllBestSales(Integer limit, LocalDateTime startDate, LocalDateTime endDate){
+        return centralRepository.getAllBestSales(limit, startDate, endDate);
     }
 }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Repository;
 
 import com.example.demo.entity.BestSale;
@@ -22,10 +23,26 @@ public class CentralRepository {
     @Autowired private final DataSource dataSource;
     @Autowired private final SaleRepository saleRepository;
 
-    public List<BestSale> getAllBestSales(){
+    public List<BestSale> getAllBestSales(Integer limit, LocalDateTime startDate, LocalDateTime endDate){
         List<BestSale> bestSales = new ArrayList<>();
        try (  Connection connection = dataSource.getConnection();
-       PreparedStatement statement = connection.prepareStatement("select bs.id, bs.updatedat, bs.id_sale from best_sale bs")){
+
+       StringBuilder query = new StringBuilder("select bs.id, bs.updatedat, bs.id_sale from best_sale bs where 1 = 1 ");
+
+       if (startDate !== null && endDate !== null) {
+        query.append("and updatedat between ? and ?");
+       }
+
+       if (limit !== null) {
+        query.append("limit ?");
+       }
+
+       PreparedStatement statement = connection.prepareStatement(query)){
+
+
+        statement.setTimestamp(1, startDate);
+        statement.setTimestamp(2,endDate);
+        statement.setInt(3, limit);
         
         ResultSet resultSet = statement.executeQuery();
 

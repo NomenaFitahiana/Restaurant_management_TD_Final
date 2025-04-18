@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +20,10 @@ public class CentralController{
 
   
     @GetMapping("/bestSales")
-    public String getAllBestSales(){
-       // BestSale bestSale = centralService.getAllBestSales();
-        String response = centralService.getAllBestSales();
+    public ResponseEntity<Object> getAllBestSales(){
+        List<BestSale> bestSale = centralService.getAllBestSales();
       
-        return response;
+        return new ResponseEntity<>(bestSale, HttpStatus.OK);
     }
 
 

@@ -28,15 +28,23 @@ public class CentralController{
     @Autowired  private CentralService centralService;
 
     @GetMapping("dishes/{id}/bestProcessingTime")
-    public ResponseEntity<Object> getDishWithBestProcessingTime(@PathVariable Long id, @RequestParam (name = "top", required = false) int top, @RequestParam (name = "durationUnit", required = false) DurationUnit durationUnit, @RequestParam(name = "calculationMode", required = false) CalculationMode calculationMode ) {
+    public ResponseEntity<Object> getDishWithBestProcessingTime(
+            @PathVariable Long id,
+            @RequestParam (name = "top", required = false) Integer top,
+            @RequestParam (name = "durationUnit", required = false, defaultValue = "SECONDS") DurationUnit durationUnit,
+            @RequestParam(name = "calculationMode", required = false, defaultValue = "AVERAGE") CalculationMode calculationMode ) {
         try {
-            AllProcessingTime allProcessingTime = centralService.getAllBestProcessingTime(top, durationUnit, calculationMode);
+
+            if (top == null) {
+                top = Integer.MAX_VALUE;
+            }
+            AllProcessingTime allProcessingTime = centralService.getAllBestProcessingTime(id, top, durationUnit, calculationMode);
             return new ResponseEntity<>(allProcessingTime, HttpStatus.OK);
         } catch (ClientException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
-      }
+        }
     }
     
   

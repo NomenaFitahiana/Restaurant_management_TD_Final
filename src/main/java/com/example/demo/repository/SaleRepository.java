@@ -58,7 +58,7 @@ public class SaleRepository {
                              connection.prepareStatement("insert into sale (id, sale_point, dish, quantity_sold, total_amount) values (?, ?, ?, ?, ?)"
                                      + " on conflict (id) do nothing"
                                      + " returning id, sale_point, dish, quantity_sold, total_amount")) {
-                    long id = saleToSave.getId() == null ? postgresNextReference.nextID("saleToSave", connection) : saleToSave.getId();
+                    Long id = saleToSave.getId() == null ? postgresNextReference.nextID("sale", connection) : saleToSave.getId();
                     statement.setLong(1, id);
                     statement.setString(2, saleToSave.getSalesPoint());
                     statement.setString(3, saleToSave.getDish());

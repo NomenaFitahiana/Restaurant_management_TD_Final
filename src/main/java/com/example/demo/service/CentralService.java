@@ -146,22 +146,45 @@ public class CentralService {
             allProcessingTime.setBestProcessingTimes(allTimes.stream().sorted(Comparator.comparingDouble(BestProcessingTime::getDuration)).limit(top).collect(Collectors.toList()));
         }else if(calculationMode.equals(CalculationMode.MAXIMUM)){
             allProcessingTime.setBestProcessingTimes(allTimes.stream().sorted(Comparator.comparingDouble(BestProcessingTime::getDuration).reversed()).limit(top).collect(Collectors.toList()));
-        }else{
-            allProcessingTime.setBestProcessingTimes(allTimes.stream().sorted(Comparator.comparingDouble(BestProcessingTime::getDuration)).limit(top).collect(Collectors.toList()));
+        }else if (calculationMode.equals(CalculationMode.AVERAGE)) {
+            BestProcessingTime avg8081 = averageOf(timesFrom8081);
+            BestProcessingTime avg8082 = averageOf(timesFrom8082);
+
+            List<BestProcessingTime> averages = new ArrayList<>();
+            if(avg8081!=null) averages.add(avg8081);
+            if(avg8082!=null) averages.add(avg8082);
+
+            allProcessingTime.setBestProcessingTimes(averages);
         }
 
         return allProcessingTime;
     }
 
+    private BestProcessingTime averageOf(List<BestProcessingTime> list) {
+        if (list.isEmpty()) return null;
+        BestProcessingTime reference = list.getFirst();
+        double averageDuration = list.stream()
+                .mapToDouble(BestProcessingTime::getDuration)
+                .average()
+                .orElse(0.0);
+        BestProcessingTime result = new BestProcessingTime();
+        result.setSalesPoint(reference.getSalesPoint());
+        result.setDishName(reference.getDishName());
+        result.setDuration(averageDuration);
+        result.setDurationUnit(reference.getDurationUnit());
+        result.setCalculationMode(reference.getCalculationMode());
+
+        return result;
+    }
+
+
     public List<BestProcessingTime> convertToBestProcessingTimeList(String json, String salesPoint, DurationUnit durationUnit, CalculationMode calculationMode) {
         {
             List<BestProcessingTime> result = new ArrayList<>();
-
             try {
                 JsonNode root = objectMapper.readTree(json);
                 String dishName = root.get("dishName").asText();
                 JsonNode processingTimeArray = root.get("processingTime");
-
                 for (JsonNode durationNode : processingTimeArray) {
                     BestProcessingTime bpt = new BestProcessingTime();
                     bpt.setSalesPoint(salesPoint);
@@ -171,7 +194,6 @@ public class CentralService {
                     bpt.setCalculationMode(calculationMode);
                     result.add(bpt);
                 }
-
             } catch (Exception e) {
                 throw new RuntimeException("Failed to convert processing times data to BestProcessingTime", e);
             }

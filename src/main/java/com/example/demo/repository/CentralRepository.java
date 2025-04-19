@@ -23,51 +23,26 @@ public class CentralRepository {
     @Autowired private final DataSource dataSource;
     @Autowired private final SaleRepository saleRepository;
 
-    public List<BestSale> getAllBestSales(Integer limit, LocalDateTime startDate, LocalDateTime endDate){
-        List<BestSale> bestSales = new ArrayList<>();
+    public BestSale getAllBestSales(Integer top){
+        BestSale bestSale = new BestSale();
+
        try (  Connection connection = dataSource.getConnection()){
-        StringBuilder query = new StringBuilder("SELECT bs.id, bs.updatedat, bs.id_sale FROM best_sale bs WHERE 1=1");
-        List<Object> parameters = new ArrayList<>();
+        PreparedStatement statement = connection.prepareStatement("SELECT bs.id, bs.updatedat, bs.id_sale FROM best_sale bs ");
 
-        if (startDate != null && endDate != null) {
-            query.append(" AND updatedat BETWEEN ? AND ?");
-            parameters.add(Timestamp.valueOf(startDate));
-            parameters.add(Timestamp.valueOf(endDate));
-        }
-
-        query.append(" ORDER BY bs.updatedat DESC");
-
-        if (limit != null) {
-            query.append(" LIMIT ?");
-            parameters.add(limit);
-        }
-
-        PreparedStatement statement = connection.prepareStatement(query.toString());
-
-       for (int i = 0; i < parameters.size(); i++) {
-                Object param = parameters.get(i);
-                if (param instanceof Timestamp) {
-                    statement.setTimestamp(i + 1, (Timestamp) param);
-                } else if (param instanceof Integer) {
-                    statement.setInt(i + 1, (Integer) param);
-                }
-            }
 
         ResultSet resultSet = statement.executeQuery();
 
-        while (resultSet.next()) {
-            BestSale bestSale = new BestSale();
+        if (resultSet.next()) {
             Long id = resultSet.getLong("id");
             LocalDateTime updatedAt = resultSet.getTimestamp("updatedat").toLocalDateTime();
-            List<Sale> sales = saleRepository.getByUpdatedAt(updatedAt);
+            List<Sale> sales = saleRepository.getByUpdatedAt(top);
 
             bestSale.setId(id);
             bestSale.setUpdatedAt(updatedAt);
             bestSale.setSales(sales);
 
-            bestSales.add(bestSale);
         }
-      return bestSales;
+      return bestSale;
 
        } catch (SQLException e) {
         throw new RuntimeException("Error fetching best sales", e);       }

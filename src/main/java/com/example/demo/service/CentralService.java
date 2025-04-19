@@ -102,12 +102,8 @@ public class CentralService {
     }
 }
 
-    public List<BestSale> getAllBestSales(Integer limit, LocalDateTime startDate, LocalDateTime endDate){
-        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-                    throw new IllegalArgumentException("Start date must be before end date");
-                }
-        
-        return centralRepository.getAllBestSales(limit, startDate, endDate);  
+    public BestSale getAllBestSales(Integer top){        
+        return centralRepository.getAllBestSales(top);  
     }
 
     public BestSale saveAll(List<Sale> sale){

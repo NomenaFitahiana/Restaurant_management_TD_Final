@@ -25,9 +25,9 @@ public class CentralController{
 
   
     @GetMapping("/bestSales")
-    public ResponseEntity<Object> getAllBestSales(@RequestParam (name = "limit", required = false) Integer limit , @RequestParam(name = "startDate", required = false) LocalDateTime startDate, @RequestParam (name = "endDate", required = false) LocalDateTime endDate){
+    public ResponseEntity<Object> getAllBestSales(@RequestParam (name = "top", required = false) Integer top ){
         try {
-            List<BestSale> bestSales = centralService.getAllBestSales(limit, startDate, endDate);
+            BestSale bestSales = centralService.getAllBestSales(top);
             return new ResponseEntity<>(bestSales, HttpStatus.OK);
         } catch (ClientException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);

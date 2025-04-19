@@ -22,12 +22,12 @@ import lombok.RequiredArgsConstructor;
 public class SaleRepository {
     @Autowired private final DataSource dataSource;
 
-    public List<Sale> getByUpdatedAt(LocalDateTime updatedAt){
+    public List<Sale> getByUpdatedAt(int limit){
         List<Sale> sales = new ArrayList<>();
 
         try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement("select s.id, s.sale_point, s.dish, s.quantity_sold, s.total_amount, b.updatedat from sale s join best_sale b on b.id_sale = s.id where updatedat = ? ")) {
-            statement.setTimestamp(1, Timestamp.valueOf(updatedAt));
+        PreparedStatement statement = connection.prepareStatement("select s.id, s.sale_point, s.dish, s.quantity_sold, s.total_amount, b.updatedat from sale s join best_sale b on b.id_sale = s.id order by s.quantity_sold desc limit ? ")) {
+            statement.setInt(1, limit);
 
             ResultSet resultSet = statement.executeQuery();
 

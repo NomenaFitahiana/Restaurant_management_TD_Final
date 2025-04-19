@@ -4,13 +4,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.entity.AllProcessingTime;
@@ -20,27 +18,21 @@ import com.example.demo.entity.CalculationMode;
 import com.example.demo.entity.DurationUnit;
 import com.example.demo.entity.Sale;
 import com.example.demo.repository.operations.CentralRepository;
-import com.example.demo.repository.operations.ProcessingTimeRepository;
-import com.example.demo.repository.operations.SaleRepository;
-import com.example.demo.service.Exceptions.ServerException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class CentralService {
     private CentralRepository centralRepository;
-    private ProcessingTimeRepository processingTimeRepository;
     private static final String BASE_URL_8081 = "http://localhost:8081";
     private static final String BASE_URL_8082 = "http://localhost:8082";
 
 private static final String PROCESSING_TIME_URL_8081 = "/dishes/processing-times";
 private static final String PROCESSING_TIME_URL_8082 = "/dishes/processing-times";
 
-
     private final HttpClient httpClient;
 
-    public CentralService(CentralRepository centralRepository, ProcessingTimeRepository processingTimeRepository){
-        this.processingTimeRepository = processingTimeRepository;
+    public CentralService(CentralRepository centralRepository){
         this.centralRepository = centralRepository;
         this.httpClient = HttpClient.newBuilder()
                           .version(HttpClient.Version.HTTP_2)
@@ -52,7 +44,7 @@ private static final String PROCESSING_TIME_URL_8082 = "/dishes/processing-times
         HttpRequest request = HttpRequest.newBuilder()
                               .GET()
                               .uri(URI.create(fullUrl))
-                              .header("Accept", "application/json")
+                              .header("X-API-KEY", System.getenv("API_KEY") )
                               .build();
     
     
@@ -127,11 +119,11 @@ private double convertDuration(double duration, DurationUnit from, DurationUnit 
 }
 
     public String fetchOrdersSalesFrom8081() {
-        return fetchApi(BASE_URL_8081 + "/orders/sales");
+        return fetchApi(BASE_URL_8081 + "/orders/sales?top="+Integer.MAX_VALUE);
     }
 
     public String fetchOrdersSalesFrom8082() {
-        return fetchApi(BASE_URL_8082 + "/orders/sales");
+        return fetchApi(BASE_URL_8082 + "/orders/sales?top="+Integer.MAX_VALUE);
     }
 
     public BestSale fetchAndSaveFromBothApis() {
@@ -142,8 +134,8 @@ private double convertDuration(double duration, DurationUnit from, DurationUnit 
         List<Sale> salesFrom8082 = convertToSales(jsonFrom8082);
         
         List<Sale> allSales = new ArrayList<>();
-        salesFrom8081.forEach(sale -> sale.setSalesPoint("pv-antanimena"));
-        salesFrom8082.forEach(sale -> sale.setSalesPoint("pv-analamahitsy"));
+        salesFrom8081.forEach(sale -> sale.setSalesPoint("Antanimena"));
+        salesFrom8082.forEach(sale -> sale.setSalesPoint("Analamahitsy"));
 
         allSales.addAll(salesFrom8081);
         allSales.addAll(salesFrom8082);
@@ -151,7 +143,7 @@ private double convertDuration(double duration, DurationUnit from, DurationUnit 
         return saveAll(allSales);
     }
 
-    public AllProcessingTime getAllBestProcessingTime(Long dishId, Integer top, DurationUnit durationUnit, CalculationMode calculationMode) {
+   /* public AllProcessingTime getAllBestProcessingTime(Long dishId, Integer top, DurationUnit durationUnit, CalculationMode calculationMode) {
     String jsonFrom8081 = fetchProcessingTimesFrom8081();
     List<BestProcessingTime> timesFrom8081 = convertToProcessingTimes(jsonFrom8081);
     
@@ -170,17 +162,15 @@ private double convertDuration(double duration, DurationUnit from, DurationUnit 
             .toList();
     
    
-    
-    processingTimeRepository.saveProcessingTime(filteredTimes);
-    
-    List<BestProcessingTime> bestTimes = processingTimeRepository.getBestProcessingTimes(dishId, top, durationUnit);
-    
+    List<Double> bestTimes = new ArrayList<>();
+
+
     AllProcessingTime response = new AllProcessingTime();
     response.setUpdatedAt(LocalDateTime.now());
     response.setBestProcessingTimes(bestTimes);
     
     return response;
-}
+}*/
 
     public List<Sale> convertToSales(String ordersJson) {
     try {

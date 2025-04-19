@@ -27,7 +27,7 @@ import com.example.demo.service.Exceptions.*;
 public class CentralController{
     @Autowired  private CentralService centralService;
 
-    @GetMapping("dishes/{id}/bestProcessingTime")
+    /*@GetMapping("dishes/{id}/bestProcessingTime")
     public ResponseEntity<Object> getDishWithBestProcessingTime(@PathVariable Long id, @RequestParam (name = "top", required = false) int top, @RequestParam (name = "durationUnit", required = false) DurationUnit durationUnit, @RequestParam(name = "calculationMode", required = false) CalculationMode calculationMode ) {
         try {
             AllProcessingTime allProcessingTime = centralService.getAllBestProcessingTime(top, durationUnit, calculationMode);
@@ -37,7 +37,7 @@ public class CentralController{
         } catch (Exception e) {
             return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
       }
-    }
+    }*/
     
   
     @GetMapping("/bestSales")

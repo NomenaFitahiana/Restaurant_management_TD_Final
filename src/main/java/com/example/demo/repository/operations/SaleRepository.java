@@ -1,4 +1,4 @@
-package com.example.demo.repository;
+package com.example.demo.repository.operations;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.example.demo.entity.Sale;
+import com.example.demo.repository.DataSource;
+import com.example.demo.repository.PostgresNextReference;
 
 import lombok.RequiredArgsConstructor;
 

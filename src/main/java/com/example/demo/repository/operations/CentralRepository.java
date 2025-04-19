@@ -1,4 +1,4 @@
-package com.example.demo.repository;
+package com.example.demo.repository.operations;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import com.example.demo.entity.BestSale;
 import com.example.demo.entity.Sale;
+import com.example.demo.repository.DataSource;
 
 import lombok.RequiredArgsConstructor;
 

@@ -14,6 +14,7 @@ import lombok.ToString;
 @ToString
 public class BestProcessingTime {
    private String salesPoint;
+   private Long dishId;
    private String dish;
    private double preparationDuration;
    private DurationUnit durationUnit;

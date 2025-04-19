@@ -62,7 +62,8 @@ public class CentralRepository {
                 }
     
                 String insertBestSaleSQL = "INSERT INTO best_sale (updatedat, id_sale) VALUES (?, ?) " +
-                                         "RETURNING id, updatedat";
+                    "ON CONFLICT (id_sale) DO UPDATE SET updatedat = EXCLUDED.updatedat " +
+                    "RETURNING id, updatedat";
     
                 savedSales.forEach(s -> {
                     try (PreparedStatement statement = connection.prepareStatement(insertBestSaleSQL)) {

@@ -55,9 +55,13 @@ public class SaleRepository {
         try (Connection connection = dataSource.getConnection()) {
             
                 try (PreparedStatement statement =
-                             connection.prepareStatement("insert into sale (id, sale_point, dish, quantity_sold, total_amount) values (?, ?, ?, ?, ?)"
-                                     + " on conflict (id) do nothing"
-                                     + " returning id, sale_point, dish, quantity_sold, total_amount")) {
+                             connection.prepareStatement("INSERT INTO sale (id, sale_point, dish, quantity_sold, total_amount) VALUES (?, ?, ?, ?, ?) " +
+                "ON CONFLICT (id) DO UPDATE SET " +
+                "sale_point = EXCLUDED.sale_point, " +
+                "dish = EXCLUDED.dish, " +
+                "quantity_sold = EXCLUDED.quantity_sold, " +
+                "total_amount = EXCLUDED.total_amount " +
+                "RETURNING id, sale_point, dish, quantity_sold, total_amount")) {
                     Long id = saleToSave.getId() == null ? postgresNextReference.nextID("sale", connection) : saleToSave.getId();
                     statement.setLong(1, id);
                     statement.setString(2, saleToSave.getSalesPoint());

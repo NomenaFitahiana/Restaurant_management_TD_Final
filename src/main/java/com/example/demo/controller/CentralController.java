@@ -20,7 +20,6 @@ import com.example.demo.service.CentralService;
 import com.example.demo.service.Exceptions.*;
 
 @RestController
-@RequestMapping("/")
 public class CentralController{
     @Autowired  private CentralService centralService;
 
@@ -37,11 +36,19 @@ public class CentralController{
       }
     }
 
-    @PostMapping("/")
-    public ResponseEntity<Object> saveBestSale (@RequestBody List<Sale> sale){
-        BestSale sales = centralService.saveAll(sale);
-
-        return new ResponseEntity<>(sales, HttpStatus.CREATED);
+    @PostMapping("/synchronization")
+    public ResponseEntity<BestSale> synchronizeOrders(
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            @RequestParam int limit) {
+        
+        String ordersData = centralService.fetchOrdersSales(startDate, endDate, limit);
+        
+        List<Sale> salesToSave = centralService.convertToSales(ordersData);
+        
+        BestSale savedSales = centralService.saveAll(salesToSave);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedSales);
     }
 }
 

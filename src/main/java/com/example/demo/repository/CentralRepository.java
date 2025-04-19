@@ -68,7 +68,6 @@ public class CentralRepository {
                     try (PreparedStatement statement = connection.prepareStatement(insertBestSaleSQL)) {
                         statement.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
                         statement.setLong(2, s.getId());
-                        statement.addBatch();
     
                         try (ResultSet rs = statement.executeQuery()) {
                             if (rs.next()) {

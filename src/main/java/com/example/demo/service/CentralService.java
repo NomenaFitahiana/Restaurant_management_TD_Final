@@ -72,6 +72,9 @@ public class CentralService {
         List<Sale> salesFrom8082 = convertToSales(jsonFrom8082);
         
         List<Sale> allSales = new ArrayList<>();
+        salesFrom8081.forEach(sale -> sale.setSalesPoint("pv-antanimena"));
+        salesFrom8082.forEach(sale -> sale.setSalesPoint("pv-analamahitsy"));
+
         allSales.addAll(salesFrom8081);
         allSales.addAll(salesFrom8082);
         
@@ -88,9 +91,9 @@ public class CentralService {
         for (JsonNode node : rootNode) {
             Sale sale = new Sale();
             sale.setId(node.path("id").asLong());
-            sale.setDish(node.path("dish").asText());
-            sale.setQuantitySold(node.path("quantitySold").asInt());
-            sale.setTotalAmount(node.path("totalAmount").asDouble());
+            sale.setDish(node.path("dishName").asText());
+            sale.setQuantitySold(node.path("quantity").asInt());
+            sale.setTotalAmount(node.path("amountTotal").asDouble());
             sale.setSalesPoint("DEFAULT_POINT"); 
             
             sales.add(sale);

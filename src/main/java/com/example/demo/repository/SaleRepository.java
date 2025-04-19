@@ -48,42 +48,37 @@ public class SaleRepository {
         return sales;
     }
 
-    public List<Sale> saveAll(List<Sale> saleToSave) throws SQLException{
-        List<Sale> sales = new ArrayList<>();
+    public Sale saveAll(Sale saleToSave) throws SQLException{
+        Sale sale = new Sale();
         PostgresNextReference postgresNextReference = new PostgresNextReference();
 
         try (Connection connection = dataSource.getConnection()) {
-            saleToSave.forEach(entityToSave -> {
+            
                 try (PreparedStatement statement =
                              connection.prepareStatement("insert into sale (id, sale_point, dish, quantity_sold, total_amount) values (?, ?, ?, ?, ?)"
                                      + " on conflict (id) do nothing"
                                      + " returning id, sale_point, dish, quantity_sold, total_amount")) {
-                    long id = entityToSave.getId() == null ? postgresNextReference.nextID("entityToSave", connection) : entityToSave.getId();
+                    long id = saleToSave.getId() == null ? postgresNextReference.nextID("saleToSave", connection) : saleToSave.getId();
                     statement.setLong(1, id);
-                    statement.setString(2, entityToSave.getSalesPoint());
-                    statement.setString(3, entityToSave.getDish());
-                    statement.setInt(4, entityToSave.getQuantitySold());
-                    statement.setDouble(5, entityToSave.getTotalAmount());
-                    statement.executeBatch();
+                    statement.setString(2, saleToSave.getSalesPoint());
+                    statement.setString(3, saleToSave.getDish());
+                    statement.setInt(4, saleToSave.getQuantitySold());
+                    statement.setDouble(5, saleToSave.getTotalAmount());
 
                     ResultSet resultSet = statement.executeQuery();
 
                     if (resultSet.next()) {
-                       
-                        Sale savedsale = new Sale();
-                        savedsale.setId(resultSet.getLong("id"));
-                        savedsale.setSalesPoint(resultSet.getString("sale_point"));
-                        savedsale.setDish(resultSet.getString("dish"));
-                        savedsale.setQuantitySold(resultSet.getInt("quantity_sold"));
-                        savedsale.setTotalAmount(resultSet.getDouble("total_amount"));
-                        sales.add(savedsale);
+                        sale.setId(resultSet.getLong("id"));
+                        sale.setSalesPoint(resultSet.getString("sale_point"));
+                        sale.setDish(resultSet.getString("dish"));
+                        sale.setQuantitySold(resultSet.getInt("quantity_sold"));
+                        sale.setTotalAmount(resultSet.getDouble("total_amount"));
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-            });
         }
-        return sales;
+        return sale;
     }
 }
 

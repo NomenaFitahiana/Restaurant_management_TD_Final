@@ -24,7 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class CentralService {
     private CentralRepository centralRepository;
-    private static final String BASE_URL = "http:localhost:8081";
+    private static final String BASE_URL_8081 = "http://localhost:8081";
+    private static final String BASE_URL_8082 = "http://localhost:8082";
     private final HttpClient httpClient;
 
     public CentralService(CentralRepository centralRepository){
@@ -35,26 +36,46 @@ public class CentralService {
                           .build();
     }
 
-
-    public String fetchOrdersSales(String startDate, String endDate, int limit){
-        String url = String.format("%s/orders/sales?startDate=%s&endDate=%s&limit=%d", 
-                             BASE_URL, startDate, endDate, limit);
+    private String fetchApi(String fullUrl) {  
+        HttpRequest request = HttpRequest.newBuilder()
+                              .GET()
+                              .uri(URI.create(fullUrl))
+                              .header("Accept", "application/json")
+                              .build();
     
-    HttpRequest request = HttpRequest.newBuilder()
-                          .GET()
-                          .uri(URI.create(url))
-                          .header("Accept", "application/json")
-                          .build();
     
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
             if (response.statusCode() == 200) {
                 return response.body();
-            }else throw new RuntimeException("Failed with HTTP error code: " + response.statusCode());
+            } else {
+                throw new RuntimeException("Failed with HTTP error code: " + response.statusCode());
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Error while calling the external API" + e.getMessage());
+            throw new RuntimeException("Error while calling the external API: " + e.getMessage());
         }
+    }
+
+    public String fetchOrdersSalesFrom8081() {
+        return fetchApi(BASE_URL_8081 + "/orders/sales");
+    }
+
+    public String fetchOrdersSalesFrom8082() {
+        return fetchApi(BASE_URL_8082 + "/orders/sales");
+    }
+
+    public BestSale fetchAndSaveFromBothApis() {
+        String jsonFrom8081 = fetchOrdersSalesFrom8081();
+        List<Sale> salesFrom8081 = convertToSales(jsonFrom8081);
+        
+        String jsonFrom8082 = fetchOrdersSalesFrom8082();
+        List<Sale> salesFrom8082 = convertToSales(jsonFrom8082);
+        
+        List<Sale> allSales = new ArrayList<>();
+        allSales.addAll(salesFrom8081);
+        allSales.addAll(salesFrom8082);
+        
+        return saveAll(allSales);
     }
 
     public List<Sale> convertToSales(String ordersJson) {

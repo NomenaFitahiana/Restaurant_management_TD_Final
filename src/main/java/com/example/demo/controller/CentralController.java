@@ -37,19 +37,11 @@ public class CentralController{
     }
 
     @PostMapping("/synchronization")
-    public ResponseEntity<BestSale> synchronizeOrders(
-            @RequestParam String startDate,
-            @RequestParam String endDate,
-            @RequestParam int limit) {
-        
-        String ordersData = centralService.fetchOrdersSales(startDate, endDate, limit);
-        
-        List<Sale> salesToSave = centralService.convertToSales(ordersData);
-        
-        BestSale savedSales = centralService.saveAll(salesToSave);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedSales);
-    }
+    public ResponseEntity<BestSale> synchronizeFromBothApis() {
+    
+    BestSale result = centralService.fetchAndSaveFromBothApis();
+    return ResponseEntity.status(HttpStatus.CREATED).body(result);
+}
 }
 
 

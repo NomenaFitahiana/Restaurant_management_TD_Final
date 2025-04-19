@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -14,8 +16,8 @@ import lombok.ToString;
 @ToString
 public class BestProcessingTime {
    private String salesPoint;
-   private Long dishId;
-   private String dish;
-   private double preparationDuration;
+   private String dishName;
+   private Double duration;
    private DurationUnit durationUnit;
+   private CalculationMode calculationMode;
 }

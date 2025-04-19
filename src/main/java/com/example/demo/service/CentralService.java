@@ -5,9 +5,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -23,12 +26,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class CentralService {
-    private CentralRepository centralRepository;
+    private final CentralRepository centralRepository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private static final String BASE_URL_8081 = "http://localhost:8081";
     private static final String BASE_URL_8082 = "http://localhost:8082";
 
-private static final String PROCESSING_TIME_URL_8081 = "/dishes/processing-times";
-private static final String PROCESSING_TIME_URL_8082 = "/dishes/processing-times";
+    private static final String PROCESSING_TIME_URL_8081 = "/orders/dishes/";
+    private static final String PROCESSING_TIME_URL_8082 = "/orders/dishes/";
 
     private final HttpClient httpClient;
 
@@ -60,64 +66,6 @@ private static final String PROCESSING_TIME_URL_8082 = "/dishes/processing-times
         }
     }
 
-    public String fetchProcessingTimesFrom8081() {
-        return fetchApi(BASE_URL_8081 + PROCESSING_TIME_URL_8081);
-    }
-    
-    public String fetchProcessingTimesFrom8082() {
-        return fetchApi(BASE_URL_8082 + PROCESSING_TIME_URL_8082);
-    }
-
-    public List<BestProcessingTime> convertToProcessingTimes(String processingTimesJson) {
-    try {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode = mapper.readTree(processingTimesJson);
-        
-        List<BestProcessingTime> processingTimes = new ArrayList<>();
-        
-        for (JsonNode node : rootNode) {
-            BestProcessingTime processingTime = new BestProcessingTime();
-            processingTime.setDishId(node.path("dishId").asLong());
-            processingTime.setDish(node.path("dishName").asText());
-            
-            double processingTimeValue = node.path("processingTime").asDouble();
-            DurationUnit unit = DurationUnit.valueOf(node.path("durationFormat").asText());
-            
-        
-            if (unit != DurationUnit.SECONDS) {
-                processingTimeValue = convertDuration(processingTimeValue, unit, DurationUnit.SECONDS);
-                unit = DurationUnit.SECONDS;
-            }
-            
-            processingTime.setPreparationDuration(processingTimeValue);
-            processingTime.setDurationUnit(unit);
-            
-            processingTimes.add(processingTime);
-        }
-        
-        return processingTimes;
-    } catch (Exception e) {
-        throw new RuntimeException("Failed to convert processing times data", e);
-    }
-}
-
-private double convertDuration(double duration, DurationUnit from, DurationUnit to) {
-    if (from == to) return duration;
-    
-    double seconds;
-    switch (from) {
-        case MINUTES: seconds = duration * 60; break;
-        case HOUR: seconds = duration * 3600; break;
-        default: seconds = duration;
-    }
-    
-    switch (to) {
-        case MINUTES: return seconds / 60;
-        case HOUR: return seconds / 3600;
-        default: return seconds;
-    }
-}
-
     public String fetchOrdersSalesFrom8081() {
         return fetchApi(BASE_URL_8081 + "/orders/sales?top="+Integer.MAX_VALUE);
     }
@@ -142,35 +90,6 @@ private double convertDuration(double duration, DurationUnit from, DurationUnit 
         
         return saveAll(allSales);
     }
-
-   /* public AllProcessingTime getAllBestProcessingTime(Long dishId, Integer top, DurationUnit durationUnit, CalculationMode calculationMode) {
-    String jsonFrom8081 = fetchProcessingTimesFrom8081();
-    List<BestProcessingTime> timesFrom8081 = convertToProcessingTimes(jsonFrom8081);
-    
-    String jsonFrom8082 = fetchProcessingTimesFrom8082();
-    List<BestProcessingTime> timesFrom8082 = convertToProcessingTimes(jsonFrom8082);
-    
-    timesFrom8081.forEach(time -> time.setSalesPoint("Antanimena"));
-    timesFrom8082.forEach(time -> time.setSalesPoint("Analamahitsy"));
-    
-    List<BestProcessingTime> allTimes = new ArrayList<>();
-    allTimes.addAll(timesFrom8081);
-    allTimes.addAll(timesFrom8082);
-    
-    List<BestProcessingTime> filteredTimes = allTimes.stream()
-            .filter(time -> dishId == null || time.getDishId().equals(dishId))
-            .toList();
-    
-   
-    List<Double> bestTimes = new ArrayList<>();
-
-
-    AllProcessingTime response = new AllProcessingTime();
-    response.setUpdatedAt(LocalDateTime.now());
-    response.setBestProcessingTimes(bestTimes);
-    
-    return response;
-}*/
 
     public List<Sale> convertToSales(String ordersJson) {
     try {
@@ -200,9 +119,72 @@ private double convertDuration(double duration, DurationUnit from, DurationUnit 
     }
 
     public BestSale saveAll(List<Sale> sale){
-        BestSale sales = centralRepository.saveAll(sale);
-        return sales;
+        return centralRepository.saveAll(sale);
     }
 
-    
+    public String fetchProcessingTimesFrom8081(Long id) {
+        return fetchApi(BASE_URL_8081 + PROCESSING_TIME_URL_8081 + id + "/processingTime");
+    }
+
+    public String fetchProcessingTimesFrom8082(Long id) {
+        return fetchApi(BASE_URL_8082 + PROCESSING_TIME_URL_8082 + id + "/processingTime");
+    }
+
+    public AllProcessingTime getAllBestProcessingTime(Long id, Integer top, DurationUnit durationUnit, CalculationMode calculationMode) {
+        String response8081 = fetchProcessingTimesFrom8081(id);
+        List<BestProcessingTime> timesFrom8081 = convertToBestProcessingTimeList(response8081, "Antanimena", durationUnit, calculationMode);
+
+        String response8082 = fetchProcessingTimesFrom8082(id);
+        List<BestProcessingTime> timesFrom8082 = convertToBestProcessingTimeList(response8082, "Analamahitsy", durationUnit, calculationMode);
+
+        List<BestProcessingTime> allTimes = new ArrayList<>();
+        allTimes.addAll(timesFrom8081);
+        allTimes.addAll(timesFrom8082);
+        AllProcessingTime allProcessingTime = new AllProcessingTime();
+        allProcessingTime.setUpdatedAt(LocalDateTime.now());
+        if(calculationMode.equals(CalculationMode.MINIMUM)){
+            allProcessingTime.setBestProcessingTimes(allTimes.stream().sorted(Comparator.comparingDouble(BestProcessingTime::getDuration)).limit(top).collect(Collectors.toList()));
+        }else if(calculationMode.equals(CalculationMode.MAXIMUM)){
+            allProcessingTime.setBestProcessingTimes(allTimes.stream().sorted(Comparator.comparingDouble(BestProcessingTime::getDuration).reversed()).limit(top).collect(Collectors.toList()));
+        }else{
+            allProcessingTime.setBestProcessingTimes(allTimes.stream().sorted(Comparator.comparingDouble(BestProcessingTime::getDuration)).limit(top).collect(Collectors.toList()));
+        }
+
+        return allProcessingTime;
+    }
+
+    public List<BestProcessingTime> convertToBestProcessingTimeList(String json, String salesPoint, DurationUnit durationUnit, CalculationMode calculationMode) {
+        {
+            List<BestProcessingTime> result = new ArrayList<>();
+
+            try {
+                JsonNode root = objectMapper.readTree(json);
+                String dishName = root.get("dishName").asText();
+                JsonNode processingTimeArray = root.get("processingTime");
+
+                for (JsonNode durationNode : processingTimeArray) {
+                    BestProcessingTime bpt = new BestProcessingTime();
+                    bpt.setSalesPoint(salesPoint);
+                    bpt.setDishName(dishName);
+                    bpt.setDuration(convertDuration(durationNode.asDouble(), durationUnit));
+                    bpt.setDurationUnit(durationUnit);
+                    bpt.setCalculationMode(calculationMode);
+                    result.add(bpt);
+                }
+
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to convert processing times data to BestProcessingTime", e);
+            }
+
+            return result;
+        }
+    }
+
+    private double convertDuration ( double duration, DurationUnit durationUnit){
+        return switch (durationUnit) {
+            case MINUTES -> duration / 60;
+            case HOUR -> duration / 3600;
+            default -> duration;
+        };
+    }
 }

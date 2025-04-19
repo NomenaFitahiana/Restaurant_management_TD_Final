@@ -99,7 +99,6 @@ private static final String PROCESSING_TIME_URL_8082 = "/dishes/processing-times
             
             processingTime.setPreparationDuration(processingTimeValue);
             processingTime.setDurationUnit(unit);
-            processingTime.setSalesPoint("DEFAULT_POINT");
             
             processingTimes.add(processingTime);
         }
@@ -196,7 +195,6 @@ private double convertDuration(double duration, DurationUnit from, DurationUnit 
             sale.setDish(node.path("dishName").asText());
             sale.setQuantitySold(node.path("quantity").asInt());
             sale.setTotalAmount(node.path("amountTotal").asDouble());
-            sale.setSalesPoint("DEFAULT_POINT"); 
             
             sales.add(sale);
         }
